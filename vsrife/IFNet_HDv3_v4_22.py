@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from .warplayer import grid_proc
 try:
     from .interpolate import interpolate
     from .warplayer_custom import warp
@@ -112,15 +113,15 @@ class IFNet(nn.Module):
             if flow is None:
                 flow, mask, feat = block[i](torch.cat((img0, img1, f0, f1, timestep), 1), None, scale=self.scale_list[i])
             else:
-                wf0 = warp(f0, flow[:, :2], tenFlow_div, backwarp_tenGrid)
-                wf1 = warp(f1, flow[:, 2:4], tenFlow_div, backwarp_tenGrid)
+                wf0 = warp(f0, grid_proc(flow[:, :2],tenFlow_div,backwarp_tenGrid))
+                wf1 = warp(f1, grid_proc(flow[:, 2:4],tenFlow_div,backwarp_tenGrid))
                 fd, m0, feat = block[i](torch.cat((warped_img0, warped_img1, wf0, wf1, timestep, mask, feat), 1), flow, scale=self.scale_list[i])
                 mask = m0
                 flow = flow + fd
             mask_list.append(mask)
             flow_list.append(flow)
-            warped_img0 = warp(img0, flow[:, :2], tenFlow_div, backwarp_tenGrid)
-            warped_img1 = warp(img1, flow[:, 2:4], tenFlow_div, backwarp_tenGrid)
+            warped_img0 = warp(img0, grid_proc(flow[:, :2],tenFlow_div,backwarp_tenGrid))
+            warped_img1 = warp(img1, grid_proc(flow[:, 2:4],tenFlow_div,backwarp_tenGrid))
             merged.append((warped_img0, warped_img1))
         mask = torch.sigmoid(mask)
         return warped_img0 * mask + warped_img1 * (1 - mask)

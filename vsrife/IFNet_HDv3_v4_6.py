@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from .warplayer import grid_proc
 try:
     from .interpolate import interpolate
     from .warplayer_custom import warp
@@ -99,8 +100,8 @@ class IFNet(nn.Module):
                 mask = mask + m0
             mask_list.append(mask)
             flow_list.append(flow)
-            warped_img0 = warp(img0, flow[:, :2], tenFlow_div, backwarp_tenGrid)
-            warped_img1 = warp(img1, flow[:, 2:4], tenFlow_div, backwarp_tenGrid)
+            warped_img0 = warp(img0, grid_proc(flow[:, :2],tenFlow_div,backwarp_tenGrid))
+            warped_img1 = warp(img1, grid_proc(flow[:, 2:4],tenFlow_div,backwarp_tenGrid))
             merged.append((warped_img0, warped_img1))
         mask_list[3] = torch.sigmoid(mask_list[3])
         return merged[3][0] * mask_list[3] + merged[3][1] * (1 - mask_list[3])
